@@ -1,0 +1,16 @@
+*.sublime-project
+*.sublime-workspace
+*.pyc
+*.log
+*.DS_Store
+*.pkl
+*.egg-info
+__pycache__
+dist
+build
+tmp
+data
+cmssw
+store
+software
+.law
