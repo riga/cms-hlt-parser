@@ -5,7 +5,7 @@ HLT parser tasks.
 """
 
 
-__all__ = []
+__all__ = ["GetLumiData", "GetLumiDataWrapper"]
 
 
 import os
@@ -16,20 +16,6 @@ import luigi
 import law
 
 from hltp.base import Task, CMSSWSandbox, BrilSandbox
-
-
-class TestTask(Task, BrilSandbox):
-
-    def output(self):
-        return self.local_target("output.txt")
-
-    @law.decorator.notify
-    def run(self):
-        output = self.output()
-        output.parent.touch()
-        with output.open("w") as f:
-            f.write(os.environ["PATH"] + "\n")
-            f.write(os.environ["LAW_SANDBOX"] + "\n")
 
 
 class GetLumiData(Task, BrilSandbox):
