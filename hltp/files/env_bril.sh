@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 action() {
-    export PATH="$PATH:/afs/cern.ch/cms/lumi/brilconda-1.1.7-cc7/bin"
+    local bril_version="$( law config hltp_config.bril_version )"
+    export PATH="$PATH:/afs/cern.ch/cms/lumi/brilconda-$bril_version/bin"
 
     source activate root
 

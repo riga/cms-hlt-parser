@@ -61,14 +61,15 @@ action() {
             echo "installing sofware in $HLTP_SOFTWARE"
             mkdir -p "$HLTP_SOFTWARE"
 
-            hltp_pip_install --user luigi
             hltp_pip_install six
-            hltp_pip_install --no-deps git+https://github.com/riga/law.git
             hltp_pip_install python-telegram-bot
+            hltp_pip_install tabulate
+            hltp_pip_install requests
+            hltp_pip_install luigi
+            LAW_INSTALL_CUSTOM_SCRIPT=1 hltp_pip_install --no-deps git+https://github.com/riga/law.git
         fi
     }
     [ -z "$ZSH_VERSION" ] && export -f hltp_install_software
-    hltp_install_software
 
     # variables for external software
     export PYTHONWARNINGS="ignore"
@@ -77,6 +78,9 @@ action() {
     local pyv="$( python -c "import sys;print('{0.major}.{0.minor}'.format(sys.version_info))" )"
     hltp_add_py "$HLTP_SOFTWARE/lib/python${pyv}/site-packages"
     hltp_add_bin "$HLTP_SOFTWARE/bin"
+
+    # install the software stack
+    hltp_install_software
 
     # add _this_ repo to the python path
     hltp_add_py "$HLTP_BASE"

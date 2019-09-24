@@ -5,17 +5,22 @@ HLT parser base tasks.
 """
 
 
-__all__ = ["Task", "CMSSWSandbox", "BrilSandbox"]
+__all__ = ["Task", "TaskWithSummary", "CMSSWSandbox", "BrilSandbox"]
 
 
 import os
 import re
+from subprocess import PIPE
+from multiprocessing import Lock
+from abc import abstractmethod
 
 import luigi
 import law
 
+law.contrib.load("cms", "telegram", "wlcg")
 
-law.contrib.load("telegram")
+
+_summary_lock = Lock()
 
 
 class Task(law.Task):
@@ -24,7 +29,7 @@ class Task(law.Task):
     convenience method for automatically building target paths and wrapping them into local targets.
     """
 
-    notify = law.NotifyTelegramParameter(significant=False)
+    notify = law.telegram.NotifyTelegramParameter(significant=False)
 
     exclude_params_req = {"notify"}
     exclude_params_branch = {"notify"}
@@ -34,8 +39,7 @@ class Task(law.Task):
     default_store = "$HLTP_STORE"
 
     def store_parts(self):
-        parts = (self.task_family,)
-        return parts
+        return (self.task_family,)
 
     def local_path(self, *path, **kwargs):
         # determine the path where to store targets
@@ -52,12 +56,60 @@ class Task(law.Task):
         cls = law.LocalDirectoryTarget if kwargs.pop("dir", False) else law.LocalFileTarget
         return cls(self.local_path(*args, store=kwargs.pop("store", None)), **kwargs)
 
+    def call_step(self, cmd, msg, publish_cmd=False, prog=None):
+        cmd = re.sub(r"\s+", " ", cmd).strip()
+        with self.publish_step(msg, runtime=True):
+            if publish_cmd:
+                self.publish_message("cmd: {}".format(law.util.colored(cmd, style="bright")))
+
+            code, out, _ = law.util.interruptable_popen(cmd, shell=True, executable="/bin/bash",
+                stdout=PIPE)
+
+            if code != 0:
+                raise Exception("{} failed".format(prog or cmd.split(" ", 1)[0]))
+
+        return out
+
+
+class TaskWithSummary(Task):
+    """
+    Task adding a *print_summary* parameter that, when set, only calls the tasks :py:meth:`summary`
+    method instead of running anyhing. In law terms, this is an *interactive parameter*.
+    """
+
+    print_summary = luigi.BoolParameter(default=False, significant=False, description="print the "
+        "task summary, do not run any task, requires the task to be complete, default: False")
+
+    interactive_params = law.Task.interactive_params + ["print_summary"]
+    exclude_params_req = {"print_summary"}
+
+    def _print_summary(self, print_summary):
+        if not self.complete():
+            return True
+
+        self.summary()
+
+    def summary_lock(self):
+        return _summary_lock
+
+    def summary(self):
+        print("print summary of task {}\n".format(self.colored_repr()))
+
+        if not self.complete():
+            law.util.abort(msg="task not yet complete")
+
 
 class CMSSWSandbox(law.SandboxTask):
+    """
+    Sandbox that embedds the run calls of inheriting tasks inside a CMSSW environment.
+    """
 
     sandbox = "bash::$HLTP_BASE/hltp/files/env_cmssw.sh"
 
 
 class BrilSandbox(law.SandboxTask):
+    """
+    Sandbox that embedds the run calls of inheriting tasks inside a bril environment.
+    """
 
     sandbox = "bash::$HLTP_BASE/hltp/files/env_bril.sh"
