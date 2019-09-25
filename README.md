@@ -2,7 +2,7 @@
 
 Read, parse and provide CMS High-Level Trigger and Luminosity information such as trigger menus, trigger paths, filter names, etc.
 
-The tasks defined in this project are based on the [luigi analysis workflow(law)](https://law.readthedocs.io/en/latest) package. For more information, see
+The tasks defined in this project are based on the [luigi analysis workflow (law)](https://law.readthedocs.io/en/latest) package. For more information, see
 
 - [law](https://law.readthedocs.io/en/latest)
 - [luigi](https://luigi.readthedocs.io/en/stable)
