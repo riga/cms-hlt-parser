@@ -5,12 +5,13 @@ Helpful utilities.
 """
 
 
-__all__ = ["dataset_is_mc", "pset_to_dict", "fwlite_loop", "text_to_process"]
+__all__ = ["dataset_is_mc", "expand_pset", "fwlite_loop", "text_to_process"]
 
 
 import sys
 import re
 
+import six
 import law
 
 
@@ -24,16 +25,27 @@ def dataset_is_mc(dataset):
     return not is_data
 
 
-def pset_to_dict(pset):
+def expand_pset(struct):
     """
-    Converts a cms parameter set *pset* recursively to a python dictionary.
+    Expands all CMS-based objects into native Python objects in an arbitrarily structured object
+    *struct*.
     """
     from FWCore.ParameterSet.Types import PSet
 
-    return {
-        key: (pset_to_dict(value) if isinstance(value, PSet) else value.value())
-        for key, value in pset.parameters_().items()
-    }
+    if isinstance(struct, list):
+        return [expand_pset(elem) for elem in struct]
+    elif isinstance(struct, tuple):
+        return tuple(expand_pset(elem) for elem in struct)
+    elif isinstance(struct, set):
+        return {expand_pset(elem) for elem in struct}
+    elif isinstance(struct, dict):
+        return {key: expand_pset(value) for key, value in six.iteritems(struct)}
+    elif struct.__class__.__module__.startswith("FWCore.ParameterSet."):
+        if callable(getattr(struct, "parameters_", None)):
+            return expand_pset(struct.parameters_())
+        elif callable(getattr(struct, "value", None)):
+            return expand_pset(struct.value())
+    return struct
 
 
 def fwlite_loop(path, handle_data=None, start=0, end=-1, object_type="Event"):

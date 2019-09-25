@@ -17,17 +17,13 @@ import law
 import tabulate
 
 from hltp.base import Task, TaskWithSummary, CMSSWSandbox, BrilSandbox
-from hltp.util import pset_to_dict, fwlite_loop, text_to_process
+from hltp.util import expand_pset, fwlite_loop, text_to_process
 
 
 luigi.namespace("hltp", scope=__name__)
 
 
 class GetDatasetLFNs(TaskWithSummary, CMSSWSandbox):
-    """
-    Uses the *dasgoclient* to get all logical file names (LFNs) beloning to a *dataset*. The output
-    is a list with all LFNs in the order returned by the dasgoclient.
-    """
 
     dataset = luigi.Parameter(description="the dataset to query")
 
@@ -60,10 +56,6 @@ class GetDatasetLFNs(TaskWithSummary, CMSSWSandbox):
 
 
 class GetDatasetLFNsWrapper(Task, law.WrapperTask):
-    """
-    Runs :py:class:`GetDatasetLFNs` for a list of *datasets*, or, when empty, for all datasets
-    defined in the ``hltp_mc_datasets`` config section.
-    """
 
     datasets = law.CSVParameter(default=law.config.keys("hltp_mc_datasets"),
         description="datasets to query, default: config hltp_mc_datasets")
@@ -73,10 +65,6 @@ class GetDatasetLFNsWrapper(Task, law.WrapperTask):
 
 
 class GetLumiData(TaskWithSummary, BrilSandbox):
-    """
-    This task uses ``brilcalc lumi`` to get luminosity data for an *hlt_path* (name or pattern), a
-    *lumi_file* and a *normtag_file*. The output is a dictionary ``run -> {lumi, hlt_path}``.
-    """
 
     hlt_path = luigi.Parameter(description="the hlt path (can be a pattern) to query")
     lumi_file = luigi.Parameter(default=law.config.get("hltp_config", "lumi_file"),
@@ -135,10 +123,6 @@ class GetLumiData(TaskWithSummary, BrilSandbox):
 
 
 class GetLumiDataWrapper(Task, law.WrapperTask):
-    """
-    Runs :py:class:`GetLumiData` for a list of *hlt_paths*, or, when empty, for all hlt paths
-    defined in the ``hltp_paths`` config section.
-    """
 
     lumi_file = GetLumiData.lumi_file
     normtag_file = GetLumiData.normtag_file
@@ -150,10 +134,6 @@ class GetLumiDataWrapper(Task, law.WrapperTask):
 
 
 class GetMenusFromDataset(TaskWithSummary, CMSSWSandbox):
-    """
-    Returns the hlt menus found in the *file_index*-th file of a *dataset* using ``hltInfo``. The
-    output is a list of hlt menus.
-    """
 
     dataset = luigi.Parameter(description="the dataset to query")
     file_index = luigi.IntParameter(default=0, description="the index of the dataset file to use, "
@@ -208,10 +188,6 @@ class GetMenusFromDataset(TaskWithSummary, CMSSWSandbox):
 
 
 class GetMenusFromDatasetWrapper(Task, law.WrapperTask):
-    """
-    Runs :py:class:`GetMenusFromDataset` for a list of *datasets*, or, when empty, for all datasets
-    defined in the ``hltp_mc_datasets`` config section.
-    """
 
     datasets = law.CSVParameter(default=law.config.keys("hltp_mc_datasets"),
         description="datasets to query, default: config hltp_mc_datasets")
@@ -226,10 +202,6 @@ class GetMenusFromDatasetWrapper(Task, law.WrapperTask):
 
 
 class GetDataMenus(TaskWithSummary, BrilSandbox):
-    """
-    Uses ``brilcalc trg`` to obtain all hlt menus used for data-taking and maps them to the runs the
-    menus were used in. The ouptut is a dictionary ``menu_name -> {menu_id, runs}``
-    """
 
     def output(self):
         return self.local_target("menus.json")
@@ -270,11 +242,6 @@ class GetDataMenus(TaskWithSummary, BrilSandbox):
 
 
 class GetPathsFromDataset(TaskWithSummary, CMSSWSandbox):
-    """
-    Returns the hlt paths found in the *file_index*-th file of a *dataset*. Internally, this is done
-    by opening the file with fwlite and reading the trigger names using the trigger bits. The
-    output is a list of hlt paths.
-    """
 
     dataset = GetMenusFromDataset.dataset
     file_index = GetMenusFromDataset.file_index
@@ -324,10 +291,6 @@ class GetPathsFromDataset(TaskWithSummary, CMSSWSandbox):
 
 
 class GetPathsFromDatasetWrapper(Task, law.WrapperTask):
-    """
-    Runs :py:class:`GetPathsFromDataset` for a list of *datasets*, or, when empty, for all datasets
-    defined in the ``hltp_mc_datasets`` config section.
-    """
 
     datasets = GetMenusFromDatasetWrapper.datasets
     file_indices = GetMenusFromDatasetWrapper.file_indices
@@ -340,10 +303,6 @@ class GetPathsFromDatasetWrapper(Task, law.WrapperTask):
 
 
 class GetPathsFromMenu(TaskWithSummary, CMSSWSandbox):
-    """
-    Returns the hlt paths found in *hlt_menu* using ``hltConfFromDB``. The output is a list of hlt
-    paths.
-    """
 
     hlt_menu = luigi.Parameter(description="the hlt menu to query")
 
@@ -386,12 +345,6 @@ class GetPathsFromMenu(TaskWithSummary, CMSSWSandbox):
 
 
 class GetFilterNamesFromMenu(TaskWithSummary, CMSSWSandbox):
-    """
-    Gets the names of the filter modules of an *hlt_path* as used in an *hlt_menu*. Internally,
-    ``hltConfigFromDB`` is used to obtain the configuration file of the path, the configuration is
-    loaded and the filter modules are identified programmatically. The output is a list of
-    dictionaries ``{name, parameters}``.
-    """
 
     hlt_menu = luigi.Parameter(description="the hlt menu (no pattern!) to query")
     hlt_path = luigi.Parameter(description="the hlt path (no pattern!) to query")
@@ -429,7 +382,7 @@ class GetFilterNamesFromMenu(TaskWithSummary, CMSSWSandbox):
         for name in module_names:
             mod = getattr(process, name, None)
             if isinstance(mod, EDFilter):
-                filters.append({"name": name, "parameters": pset_to_dict(mod)})
+                filters.append({"name": name, "parameters": expand_pset(mod.parameters_())})
 
         # save the output and print the summary
         self.output().dump(filters, indent=4, formatter="json")
@@ -448,9 +401,6 @@ class GetFilterNamesFromMenu(TaskWithSummary, CMSSWSandbox):
 
 
 class GetFilterNamesFromMenuWrapper(Task, law.WrapperTask):
-    """
-    Runs :py:class:`GetFilterNamesFromMenu` for a list of *hlt_menus* and *hlt_paths* (no patterns).
-    """
 
     hlt_menus = law.CSVParameter(description="hlt menus (no patterns!) to query")
     hlt_paths = law.CSVParameter(description="hlt paths (no patterns!) to query")
@@ -463,14 +413,6 @@ class GetFilterNamesFromMenuWrapper(Task, law.WrapperTask):
 
 
 class GetFilterNamesFromRun(TaskWithSummary):
-    """
-    Gets the names of the filter modules of an *hlt_path* as used in a specific *run_number* during
-    data-taking. Internally, :py:class:`GetDataMenus` is used to make the connection between run and
-    hlt menu, and :py:class:`GetFilterNamesFromMenu` is invoked internally as a `dynamic dependency
-    <https://luigi.readthedocs.io/en/stable/tasks.html?highlight=dynamic#dynamic-dependencies>`__.
-    In fact, the output identical (even copied) from the :py:class:`GetFilterNamesFromMenu`, i.e.,
-    it is a list of dictionaries ``{name, parameters}``.
-    """
 
     hlt_path = GetFilterNamesFromMenu.hlt_path
     run_number = luigi.IntParameter(description="the run to query")
@@ -523,10 +465,6 @@ class GetFilterNamesFromRun(TaskWithSummary):
 
 
 class GetFilterNamesFromRunWrapper(Task, law.WrapperTask):
-    """
-    Runs :py:class:`GetFilterNamesFromRun` for a list of *run_numbers* and *hlt_paths* (no
-    patterns).
-    """
 
     run_numbers = law.CSVParameter(cls=luigi.IntParameter, description="run numbers to query")
     hlt_paths = law.CSVParameter(description="hlt paths (no patterns!) to query")
@@ -542,6 +480,8 @@ class GatherMCFilters(TaskWithSummary):
 
     datasets = GetMenusFromDatasetWrapper.datasets
     hlt_paths = GetLumiDataWrapper.hlt_paths
+    verbose_datasets = luigi.BoolParameter(default=False, significant=False, description="when "
+        "set, print full dataset names in the first summary table, default: False")
     table_format = luigi.Parameter(default="grid", significant=False, description="the tabulate "
         "table format for the summary, default: grid")
 
@@ -553,11 +493,10 @@ class GatherMCFilters(TaskWithSummary):
         # strategy:
         # 1. Get all menus for all datasets.
         # 2. Assume that each dataset contains only one menu.
-        # 3. Assume that the menu is the same for all datasets.
-        # 4. Get all paths for that menu.
-        # 5. Use patterns defined in hlt_paths to select paths obtained in (4).
-        # 6. Get filter names for the menu and each selected path.
-        # 7. Save the data.
+        # 3. Get all paths for all menus.
+        # 4. Use patterns defined in hlt_paths to select paths obtained in (4).
+        # 5. Get filter names for each menu and each selected path.
+        # 6. Save the data.
 
         # coloring and colored formatter helpers
         col = lambda s: law.util.colored(s, color="light_blue", style="bright")
@@ -570,44 +509,64 @@ class GatherMCFilters(TaskWithSummary):
         ]
 
         # 2
-        menus = []
+        menu_datasets = {}
         for dataset, inp in zip(self.datasets, menu_inputs):
             _menus = inp.load(formatter="json")
             if len(_menus) != 1:
                 raise Exception("MC datasets are expected to contain one HLT menu, got {}".format(
                     ",".join(_menus)))
-            menus.append(_menus[0])
+            menu_datasets.setdefault(str(_menus[0]), []).append(dataset)
+        menus = sorted(list(menu_datasets.keys()), key=str.lower)
 
         # 3
-        if len(set(menus)) != 1:
-            raise Exception("all MC datasets are expected to have the same HLT menu, got {}".format(
-                ",".join(menus)))
-        menu = menus[0]
-        self.publish_message(fmt("menu is {}", menu))
+        paths_inputs = yield {
+            menu: GetPathsFromMenu.req(self, hlt_menu=menu)
+            for menu in menus
+        }
+        all_paths = {
+            menu: inp.load(formatter="json")
+            for menu, inp in six.iteritems(paths_inputs)
+        }
 
         # 4
-        all_paths = (yield GetPathsFromMenu.req(self, hlt_menu=menu)).load(formatter="json")
+        menu_paths = {
+            menu: [str(p) for p in paths if law.util.multi_match(p, self.hlt_paths, mode=any)]
+            for menu, paths in six.iteritems(all_paths)
+        }
+        self.publish_message(fmt("selected {} from {} available path(s) in {} menu(s):",
+            len(law.util.flatten(menu_paths.values())),
+            len(law.util.flatten(all_paths.values())), len(menus)))
+        for menu, paths in six.iteritems(menu_paths):
+            self.publish_message(fmt("{}:\n    {}", menu, "\n    ".join(paths)))
 
         # 5
-        selected_paths = [p for p in all_paths if law.util.multi_match(p, self.hlt_paths, mode=any)]
-        self.publish_message(fmt("selected {} from {} available paths:\n{}", len(selected_paths),
-            len(all_paths), "\n".join(selected_paths)))
+        menu_path_pairs = sum((
+            [(menu, path) for path in paths]
+            for menu, paths in six.iteritems(menu_paths)
+        ), [])
+        filter_inputs = yield {
+            (menu, path): GetFilterNamesFromMenu.req(self, hlt_menu=menu, hlt_path=path)
+            for menu, path in menu_path_pairs
+        }
+        filter_names = {
+            key: [str(f["name"]) for f in inp.load(formatter="json")]
+            for key, inp in six.iteritems(filter_inputs)
+        }
 
         # 6
-        filter_inputs = yield [
-            GetFilterNamesFromMenu.req(self, hlt_menu=menu, hlt_path=path)
-            for path in selected_paths
-        ]
-        all_filters = [inp.load(formatter="json") for inp in filter_inputs]
-
-        # 7
-        entry = dict(menu=menu, paths=[])
-        for path, filters in zip(selected_paths, all_filters):
-            entry["paths"].append(dict(
-                name=path,
-                filters=[f["name"] for f in filters],
+        data = []
+        for menu, datasets in six.iteritems(menu_datasets):
+            data.append(dict(
+                menu=menu,
+                datasets=datasets,
+                paths=[
+                    dict(
+                        name=path,
+                        filters=filter_names[(menu, path)],
+                    )
+                    for path in menu_paths[menu]
+                ],
             ))
-        data = [entry]
 
         # save the output and print the summary
         output = self.output()
@@ -621,19 +580,61 @@ class GatherMCFilters(TaskWithSummary):
 
             # read data
             data = self.output().load(formatter="json")
-            entry = data[0]
 
-            # define the table and fill rows
-            headers = ["HLT path", "HLT menu", "Filter names"]
+            # print the menu - dataset table
+            headers = ["HLT path(s)", "HLT menu", "Dataset(s)"]
             rows = []
-            for path_data in entry["paths"]:
+            for entry in data:
+                datasets = entry["datasets"]
+                if not self.verbose_datasets:
+                    datasets = [d.split("/", 2)[1] for d in datasets]
                 rows.append([
-                    path_data["name"],
+                    "\n".join(p["name"] for p in entry["paths"]),
                     entry["menu"],
-                    "\n".join(path_data["filters"]),
+                    "\n".join(datasets),
                 ])
 
-            # print a grid table
+            rows = sorted(rows, key=lambda row: row[0].lower())
+
+            print(tabulate.tabulate(rows, headers=headers, tablefmt=self.table_format))
+            print("")
+
+            # get a flat (menu, path) -> filters map
+            filter_map = {}
+            for entry in data:
+                for path_entry in entry["paths"]:
+                    filter_map[(entry["menu"], path_entry["name"])] = path_entry["filters"]
+
+            # define the table
+            headers = ["HLT path(s)", "HLT menu(s)", "Filter names"]
+            rows = []
+
+            # when multiple paths have exactly the same filter names associated, we want to reflect
+            # that in the printed table, so use a while loop and a reduction pattern
+            keys = sorted(list(filter_map.keys()), key=lambda key: key[1].lower())
+            while keys:
+                key = keys.pop(0)
+                menu, path = key
+
+                # prepare paths, menus and filter names
+                paths = [path]
+                menus = [menu]
+                filters = tuple(filter_map[key])
+
+                # try to look ahead to check if there is another entry with the same names
+                for _key in list(keys):
+                    _menu, _path = _key
+                    if tuple(filter_map[_key]) == filters:
+                        keys.remove(_key)
+                        paths.append(_path)
+                        menus.append(_menu)
+
+                rows.append([
+                    "\n".join(paths),
+                    "\n".join(menus),
+                    "\n".join(filters),
+                ])
+
             print(tabulate.tabulate(rows, headers=headers, tablefmt=self.table_format))
 
 
@@ -708,7 +709,9 @@ class GatherDataFilters(TaskWithSummary):
 
         # 5
         menu_path_pairs = sum((
-            [(menu, path) for path in paths] for menu, paths in six.iteritems(menu_paths)), [])
+            [(menu, path) for path in paths]
+            for menu, paths in six.iteritems(menu_paths)
+        ), [])
         filter_inputs = yield {
             (menu, path): GetFilterNamesFromMenu.req(self, hlt_menu=menu, hlt_path=path)
             for menu, path in menu_path_pairs
@@ -810,7 +813,7 @@ class GatherDataFilters(TaskWithSummary):
                 # append a new row
                 rows.append([paths_str, runs_str, menus_str, filters_str])
 
-            # sort rows by the the run column
+            # sort rows by run
             rows = sorted(rows, key=lambda row: row[1])
 
             # remove the menu column if requested
@@ -819,5 +822,4 @@ class GatherDataFilters(TaskWithSummary):
                 for row in rows:
                     row.pop(2)
 
-            # print a grid table
             print(tabulate.tabulate(rows, headers=headers, tablefmt=self.table_format))

@@ -9,10 +9,12 @@ __all__ = ["Task", "TaskWithSummary", "CMSSWSandbox", "BrilSandbox"]
 
 
 import os
+import sys
 import re
 from subprocess import PIPE
 from multiprocessing import Lock
 from abc import abstractmethod
+from contextlib import contextmanager
 
 import luigi
 import law
@@ -89,8 +91,15 @@ class TaskWithSummary(Task):
 
         self.summary()
 
+    @contextmanager
     def summary_lock(self):
-        return _summary_lock
+        try:
+            _summary_lock.acquire()
+            yield
+        finally:
+            sys.stdout.flush()
+            sys.stderr.flush()
+            _summary_lock.release()
 
     def summary(self):
         print("print summary of task {}\n".format(self.colored_repr()))
