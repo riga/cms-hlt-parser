@@ -203,6 +203,9 @@ class GetMenusFromDatasetWrapper(Task, law.WrapperTask):
 
 class GetDataMenus(TaskWithSummary, BrilSandbox):
 
+    show_runs = luigi.BoolParameter(default=False, significant=False, description="when set, print "
+        "all run numbers instead of their count in the summary, default: False")
+
     def output(self):
         return self.local_target("menus.json")
 
@@ -221,7 +224,7 @@ class GetDataMenus(TaskWithSummary, BrilSandbox):
                 continue
             menu_id, menu_name, runs = line.split(",", 2)
             menu_id = int(menu_id)
-            runs = [int(r.strip()) for r in runs[1:-1].split(",")]
+            runs = sorted([int(r.strip()) for r in runs[1:-1].split(",")])
             data[menu_name] = {"menu_id": menu_id, "runs": runs}
 
         # save the output and print the summary
@@ -233,11 +236,16 @@ class GetDataMenus(TaskWithSummary, BrilSandbox):
             super(GetDataMenus, self).summary()
 
             data = self.output().load(formatter="json")
+            menus = sorted([str(key) for key in data.keys()], key=str.lower)
 
             print("menus: {}".format(len(data)))
             print("runs : {}".format(sum(len(d["runs"]) for d in data.values())))
-            for menu_name, menu_data in data.items():
-                print("  - {} ({} runs)".format(menu_name, len(menu_data["runs"])))
+            for menu in menus:
+                if self.show_runs:
+                    runs_str = ": " + ",".join(str(r) for r in data[menu]["runs"])
+                else:
+                    runs_str = "({} runs)".format(str(len(data[menu]["runs"])))
+                print("  - {} {}".format(menu, runs_str))
             print("")
 
 
@@ -350,8 +358,11 @@ class GetFilterNamesFromMenu(TaskWithSummary, CMSSWSandbox):
     hlt_path = luigi.Parameter(description="the hlt path (no pattern!) to query")
 
     def output(self):
-        path = "{}__{}.json".format(self.hlt_menu.replace("/", "_"), self.hlt_path)
-        return self.local_target(path)
+        prefix = "{}__{}".format(self.hlt_menu.replace("/", "_"), self.hlt_path)
+        return {
+            "filters": self.local_target("{}.json".format(prefix)),
+            "config": self.local_target("{}.py".format(prefix)),
+        }
 
     @law.decorator.notify
     @law.decorator.localize
@@ -385,14 +396,16 @@ class GetFilterNamesFromMenu(TaskWithSummary, CMSSWSandbox):
                 filters.append({"name": name, "parameters": expand_pset(mod.parameters_())})
 
         # save the output and print the summary
-        self.output().dump(filters, indent=4, formatter="json")
+        outputs = self.output()
+        outputs["filters"].dump(filters, indent=4, formatter="json")
+        outputs["config"].dump(content, formatter="text")
         self.summary()
 
     def summary(self):
         with self.summary_lock():
             super(GetFilterNamesFromMenu, self).summary()
 
-            filters = self.output().load(formatter="json")
+            filters = self.output()["filters"].load(formatter="json")
 
             print("filters: {}".format(len(filters)))
             for f in filters:
@@ -426,8 +439,11 @@ class GetFilterNamesFromRun(TaskWithSummary):
         return GetDataMenus.req(self)
 
     def output(self):
-        path = "run{}__{}.json".format(self.run_number, self.hlt_path)
-        return self.local_target(path)
+        prefix = "run{}__{}".format(self.run_number, self.hlt_path)
+        return {
+            "filters": self.local_target("{}.json".format(prefix)),
+            "config": self.local_target("{}.py".format(prefix)),
+        }
 
     @law.decorator.notify
     def run(self):
@@ -446,17 +462,19 @@ class GetFilterNamesFromRun(TaskWithSummary):
                 raise Exception("no hlt menu found that contains run {}".format(self.run))
 
         # declare GetFilterNamesFromMenu for that menu as a dynamic dependency
-        target = yield GetFilterNamesFromMenu.req(self, hlt_menu=self.hlt_menu)
+        targets = yield GetFilterNamesFromMenu.req(self, hlt_menu=self.hlt_menu)
 
         # the result of GetFilterNamesFromMenu is identical to the result of _this_ task, so copy it
-        self.output().copy_from_local(target)
+        outputs = self.output()
+        outputs["filters"].copy_from_local(targets["filters"])
+        outputs["config"].copy_from_local(targets["config"])
         self.summary()
 
     def summary(self):
         with self.summary_lock():
             super(GetFilterNamesFromRun, self).summary()
 
-            filters = self.output().load(formatter="json")
+            filters = self.output()["filters"].load(formatter="json")
 
             print("filters: {}".format(len(filters)))
             for f in filters:
@@ -549,8 +567,8 @@ class GatherMCFilters(TaskWithSummary):
             for menu, path in menu_path_pairs
         }
         filter_names = {
-            key: [str(f["name"]) for f in inp.load(formatter="json")]
-            for key, inp in six.iteritems(filter_inputs)
+            key: [str(f["name"]) for f in inps["filters"].load(formatter="json")]
+            for key, inps in six.iteritems(filter_inputs)
         }
 
         # 6
@@ -717,8 +735,8 @@ class GatherDataFilters(TaskWithSummary):
             for menu, path in menu_path_pairs
         }
         filter_names = {
-            (menu, path): [d["name"] for d in inp.load(formatter="json")]
-            for (menu, path), inp in six.iteritems(filter_inputs)
+            (menu, path): [d["name"] for d in inps["filters"].load(formatter="json")]
+            for (menu, path), inps in six.iteritems(filter_inputs)
         }
 
         # 6
@@ -813,8 +831,8 @@ class GatherDataFilters(TaskWithSummary):
                 # append a new row
                 rows.append([paths_str, runs_str, menus_str, filters_str])
 
-            # sort rows by run
-            rows = sorted(rows, key=lambda row: row[1])
+            # sort rows by the first path
+            rows = sorted(rows, key=lambda row: row[0].split("\n", 1)[0])
 
             # remove the menu column if requested
             if not self.show_menus:

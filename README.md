@@ -90,7 +90,7 @@ Uses `brilcalc trg` to obtain all trigger menus used for data-taking and maps th
 
 Parameters:
 
-*No parameters*.
+- `--show-runs`: When used, all run numbers are printed in the summary table instead of only their count. Defaults to false.
 
 
 ##### `GetPathsFromDataset`
