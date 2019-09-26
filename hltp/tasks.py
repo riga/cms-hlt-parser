@@ -523,7 +523,7 @@ class GatherMCFilters(TaskWithSummary):
     table_format = luigi.Parameter(default="grid", significant=False, description="the tabulate "
         "table format for the summary, default: grid")
 
-    check_for_patterns = ["datasets", "hlt_paths"]
+    check_for_patterns = ["datasets"]
 
     def output(self):
         return self.local_target("filters.json")
@@ -689,8 +689,6 @@ class GatherDataFilters(TaskWithSummary):
     verbose_runs = luigi.BoolParameter(default=False, significant=False, description="if set, "
         "print the full list of run umbers in the summary table, default: False")
     table_format = GatherMCFilters.table_format
-
-    check_for_patterns = ["hlt_paths"]
 
     def output(self):
         return self.local_target("filters.json")
