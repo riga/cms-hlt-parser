@@ -21,6 +21,8 @@ import law
 
 law.contrib.load("cms", "telegram", "wlcg")
 
+from hltp.util import is_pattern
+
 
 _summary_lock = Lock()
 
@@ -39,6 +41,17 @@ class Task(law.Task):
     message_cache_size = 20
 
     default_store = "$HLTP_STORE"
+
+    check_for_patterns = []
+
+    def __init__(self, *args, **kwargs):
+        super(Task, self).__init__(*args, **kwargs)
+
+        for attr in self.check_for_patterns:
+            for value in law.util.make_list(getattr(self, attr)):
+                if is_pattern(value):
+                    raise ValueError("the attribute {}.{} appears to contain a pattern: {}".format(
+                        self.__class__.__name__, attr, value))
 
     def store_parts(self):
         return (self.task_family,)

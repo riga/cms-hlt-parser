@@ -25,7 +25,9 @@ luigi.namespace("hltp", scope=__name__)
 
 class GetDatasetLFNs(TaskWithSummary, CMSSWSandbox):
 
-    dataset = luigi.Parameter(description="the dataset to query")
+    dataset = luigi.Parameter(description="the dataset (no pattern!) to query")
+
+    check_for_patterns = ["dataset"]
 
     def output(self):
         return self.local_target("{}.json".format(self.dataset.replace("/", "_")))
@@ -135,9 +137,11 @@ class GetLumiDataWrapper(Task, law.WrapperTask):
 
 class GetMenusFromDataset(TaskWithSummary, CMSSWSandbox):
 
-    dataset = luigi.Parameter(description="the dataset to query")
+    dataset = GetDatasetLFNs.dataset
     file_index = luigi.IntParameter(default=0, description="the index of the dataset file to use, "
         "default: 0")
+
+    check_for_patterns = ["dataset"]
 
     def requires(self):
         return GetDatasetLFNs.req(self)
@@ -190,9 +194,11 @@ class GetMenusFromDataset(TaskWithSummary, CMSSWSandbox):
 class GetMenusFromDatasetWrapper(Task, law.WrapperTask):
 
     datasets = law.CSVParameter(default=law.config.keys("hltp_mc_datasets"),
-        description="datasets to query, default: config hltp_mc_datasets")
+        description="datasets (no patterns!) to query, default: config hltp_mc_datasets")
     file_indices = law.CSVParameter(default=[0], description="indices of dataset files to query, "
         "default: [0]")
+
+    check_for_patterns = ["datasets"]
 
     def requires(self):
         return [
@@ -201,7 +207,7 @@ class GetMenusFromDatasetWrapper(Task, law.WrapperTask):
         ]
 
 
-class GetDataMenus(TaskWithSummary, BrilSandbox):
+class GetMenusInData(TaskWithSummary, BrilSandbox):
 
     show_runs = luigi.BoolParameter(default=False, significant=False, description="when set, print "
         "all run numbers instead of their count in the summary, default: False")
@@ -233,7 +239,7 @@ class GetDataMenus(TaskWithSummary, BrilSandbox):
 
     def summary(self):
         with self.summary_lock():
-            super(GetDataMenus, self).summary()
+            super(GetMenusInData, self).summary()
 
             data = self.output().load(formatter="json")
             menus = sorted([str(key) for key in data.keys()], key=str.lower)
@@ -253,6 +259,8 @@ class GetPathsFromDataset(TaskWithSummary, CMSSWSandbox):
 
     dataset = GetMenusFromDataset.dataset
     file_index = GetMenusFromDataset.file_index
+
+    check_for_patterns = ["dataset"]
 
     def requires(self):
         return GetDatasetLFNs.req(self)
@@ -303,6 +311,8 @@ class GetPathsFromDatasetWrapper(Task, law.WrapperTask):
     datasets = GetMenusFromDatasetWrapper.datasets
     file_indices = GetMenusFromDatasetWrapper.file_indices
 
+    check_for_patterns = ["datasets"]
+
     def requires(self):
         return [
             GetPathsFromDataset.req(self, dataset=d, file_index=f)
@@ -312,7 +322,9 @@ class GetPathsFromDatasetWrapper(Task, law.WrapperTask):
 
 class GetPathsFromMenu(TaskWithSummary, CMSSWSandbox):
 
-    hlt_menu = luigi.Parameter(description="the hlt menu to query")
+    hlt_menu = luigi.Parameter(description="the hlt menu (no pattern!) to query")
+
+    check_for_patterns = ["hlt_menu"]
 
     def output(self):
         path = "{}.json".format(self.hlt_menu.replace("/", "_"))
@@ -356,6 +368,8 @@ class GetFilterNamesFromMenu(TaskWithSummary, CMSSWSandbox):
 
     hlt_menu = luigi.Parameter(description="the hlt menu (no pattern!) to query")
     hlt_path = luigi.Parameter(description="the hlt path (no pattern!) to query")
+
+    check_for_patterns = ["hlt_menu", "hlt_path"]
 
     def output(self):
         prefix = "{}__{}".format(self.hlt_menu.replace("/", "_"), self.hlt_path)
@@ -418,6 +432,8 @@ class GetFilterNamesFromMenuWrapper(Task, law.WrapperTask):
     hlt_menus = law.CSVParameter(description="hlt menus (no patterns!) to query")
     hlt_paths = law.CSVParameter(description="hlt paths (no patterns!) to query")
 
+    check_for_patterns = ["hlt_menus", "hlt_paths"]
+
     def requires(self):
         return [
             GetFilterNamesFromMenu.req(self, hlt_menu=m, hlt_path=p)
@@ -428,7 +444,9 @@ class GetFilterNamesFromMenuWrapper(Task, law.WrapperTask):
 class GetFilterNamesFromRun(TaskWithSummary):
 
     hlt_path = GetFilterNamesFromMenu.hlt_path
-    run_number = luigi.IntParameter(description="the run to query")
+    run_number = luigi.IntParameter(description="the run number to query")
+
+    check_for_patterns = ["hlt_path"]
 
     def __init__(self, *args, **kwargs):
         super(GetFilterNamesFromRun, self).__init__(*args, **kwargs)
@@ -436,7 +454,7 @@ class GetFilterNamesFromRun(TaskWithSummary):
         self.hlt_menu = None
 
     def requires(self):
-        return GetDataMenus.req(self)
+        return GetMenusInData.req(self)
 
     def output(self):
         prefix = "run{}__{}".format(self.run_number, self.hlt_path)
@@ -484,8 +502,10 @@ class GetFilterNamesFromRun(TaskWithSummary):
 
 class GetFilterNamesFromRunWrapper(Task, law.WrapperTask):
 
-    run_numbers = law.CSVParameter(cls=luigi.IntParameter, description="run numbers to query")
     hlt_paths = law.CSVParameter(description="hlt paths (no patterns!) to query")
+    run_numbers = law.CSVParameter(cls=luigi.IntParameter, description="run numbers to query")
+
+    check_for_patterns = ["hlt_paths"]
 
     def requires(self):
         return [
@@ -502,6 +522,8 @@ class GatherMCFilters(TaskWithSummary):
         "set, print full dataset names in the first summary table, default: False")
     table_format = luigi.Parameter(default="grid", significant=False, description="the tabulate "
         "table format for the summary, default: grid")
+
+    check_for_patterns = ["datasets", "hlt_paths"]
 
     def output(self):
         return self.local_target("filters.json")
@@ -658,15 +680,17 @@ class GatherMCFilters(TaskWithSummary):
 
 class GatherDataFilters(TaskWithSummary):
 
-    lumi_file = GetLumiData.lumi_file
     hlt_menus = law.CSVParameter(default=law.config.keys("hltp_data_menus"),
         description="hlt menus (can be patterns) to query")
     hlt_paths = GetLumiDataWrapper.hlt_paths
+    lumi_file = GetLumiData.lumi_file
     show_menus = luigi.BoolParameter(default=False, significant=False, description="if set, show "
         "an additional 'HLT menu(s)' column in the summary table, default: False")
     verbose_runs = luigi.BoolParameter(default=False, significant=False, description="if set, "
         "print the full list of run umbers in the summary table, default: False")
     table_format = GatherMCFilters.table_format
+
+    check_for_patterns = ["hlt_paths"]
 
     def output(self):
         return self.local_target("filters.json")
@@ -694,7 +718,7 @@ class GatherDataFilters(TaskWithSummary):
         self.publish_message(fmt("found {} valid runs in lumi file", len(valid_runs)))
 
         # 2
-        all_menu_runs = (yield GetDataMenus.req(self)).load(formatter="json")
+        all_menu_runs = (yield GetMenusInData.req(self)).load(formatter="json")
         menu_runs = {
             menu: [
                 run for run in data["runs"]

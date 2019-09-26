@@ -12,7 +12,7 @@ Available tasks:
 - [`GetDatasetLFNs`](#getdatasetlfns)
 - [`GetLumiData`](#getlumidata)
 - [`GetMenusFromDataset`](#getmenusfromdataset)
-- [`GetDataMenus`](#getdatamenus)
+- [`GetMenusInData`](#getmenusindata)
 - [`GetPathsFromDataset`](#getpathsfromdataset)
 - [`GetPathsFromMenu`](#getpathsfrommenu)
 - [`GetFilterNamesFromMenu`](#getfilternamesfrommenu)
@@ -82,9 +82,9 @@ Parameters:
 - `--file-index`: The number of the file to query. Defaults to 0.
 
 
-##### `GetDataMenus`
+##### `GetMenusInData`
 
-> `> law run hltp.GetDataMenus [parameters]`
+> `> law run hltp.GetMenusInData [parameters]`
 
 Uses `brilcalc trg` to obtain all trigger menus used for data-taking and maps them to the runs the menus they were used in. The ouptut is a dictionary `menu_name -> {menu_id, runs}`.
 
@@ -132,7 +132,7 @@ Parameters:
 
 > `> law run hltp.GetFilterNamesFromRun [parameters]`
 
-Gets the names of all `EDFilter` modules of a trigger path used in a specific run. Internally, `GetDataMenus` is used to make the connection between trigger menu and run number, and `GetFilterNamesFromMenu` is invoked internally as a [dynamic dependency](https://luigi.readthedocs.io/en/stable/tasks.html?highlight=dynamic#dynamic-dependencies). In fact, the output is identical to `GetFilterNamesFromMenu`, i.e., it is a list of dictionaries `{name, parameters}`.
+Gets the names of all `EDFilter` modules of a trigger path used in a specific run. Internally, `GetMenusInData` is used to make the connection between trigger menu and run number, and `GetFilterNamesFromMenu` is invoked internally as a [dynamic dependency](https://luigi.readthedocs.io/en/stable/tasks.html?highlight=dynamic#dynamic-dependencies). In fact, the output is identical to `GetFilterNamesFromMenu`, i.e., it is a list of dictionaries `{name, parameters}`.
 
 Parameters:
 

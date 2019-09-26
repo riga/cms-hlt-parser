@@ -5,7 +5,7 @@ Helpful utilities.
 """
 
 
-__all__ = ["dataset_is_mc", "expand_pset", "fwlite_loop", "text_to_process"]
+__all__ = ["dataset_is_mc", "expand_pset", "fwlite_loop", "text_to_process", "is_pattern"]
 
 
 import sys
@@ -110,3 +110,10 @@ def text_to_process(content, name="INTERACTIVE"):
     process.extend(cfg)
 
     return process
+
+
+def is_pattern(s):
+    """
+    Returns *True* when a string *s* contains pattern characters, and *False* otherwise.
+    """
+    return any(c in s for c in ("*", "?"))
