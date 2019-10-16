@@ -57,6 +57,8 @@ Parameters:
 
 - `--dataset`: A dataset as shown in DAS. Patterns not supported.
 
+<hr />
+
 
 ##### `GetLumiData`
 
@@ -70,6 +72,8 @@ Parameters:
 - `--lumi-file`: A luminosity file. Defaults to the `hltp_config.lumi_file` config.
 - `--normtag-file`: A normtag file. Defaults to the `hltp_config.normtag_file` config.
 
+<hr />
+
 
 ##### `GetMenusFromDataset`
 
@@ -82,6 +86,8 @@ Parameters:
 - `--dataset`: A dataset as shown in DAS. Patterns not supported.
 - `--file-index`: The number of the file to query. Defaults to 0.
 
+<hr />
+
 
 ##### `GetMenusInData`
 
@@ -92,6 +98,8 @@ Uses `brilcalc trg` to obtain all trigger menus used for data-taking and maps th
 Parameters:
 
 - `--show-runs`: When used, all run numbers are printed in the summary table instead of only their count. Defaults to false.
+
+<hr />
 
 
 ##### `GetPathsFromDataset`
@@ -105,6 +113,8 @@ Parameters:
 - `--dataset`: A dataset as shown in DAS. Patterns not supported.
 - `--file-index`: The number of the file to query. Defaults to 0.
 
+<hr />
+
 
 ##### `GetPathsFromMenu`
 
@@ -115,6 +125,8 @@ Returns the triggers paths for a trigger menu `hltConfFromDB`. The output is a l
 Parameters:
 
 - `--hlt-menu`: The trigger menu to query. Patterns not supported.
+
+<hr />
 
 
 ##### `GetPathsFromRuns`
@@ -135,6 +147,7 @@ Example output:
 
 ![Run paths](https://www.dropbox.com/s/1qlndb8iksyindu/hltp_run_paths.png?raw=1)
 
+<hr />
 
 
 ##### `GetFilterNamesFromMenu`
@@ -148,6 +161,8 @@ Parameters:
 - `--hlt-path`: The trigger path to query. Patterns not supported.
 - `--hlt-menu`: The trigger menu to query. Patterns not supported.
 
+<hr />
+
 
 ##### `GetFilterNamesFromRun`
 
@@ -159,6 +174,8 @@ Parameters:
 
 - `--hlt-path`: The trigger path to query. Patterns not supported.
 - `--run-number`: The run number to query.
+
+<hr />
 
 
 ##### `GatherMCFilters`
@@ -177,6 +194,8 @@ Parameters:
 Example output:
 
 ![MC filters](https://www.dropbox.com/s/jv4y5sdhfvy6ars/hltp_mc_filters.png.png?raw=1)
+
+<hr />
 
 
 ##### `GatherDataFilters`
