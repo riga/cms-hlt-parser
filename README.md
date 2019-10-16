@@ -121,7 +121,7 @@ Parameters:
 
 > `> law run hltp.GetPathsFromRuns [parameters]`
 
-Returns the trigger paths for trigger menus which were active in certain runs, optionally filtered by a list of trigger path patterns. The output is a dictionary `menu -> {runs, paths}`. The columns of the summary table are "HLT menu", "Runs" and "Matched HLT path(s)".
+Returns the trigger paths for trigger menus which were active in certain runs, optionally filtered by a list of trigger path patterns. The output is a dictionary `menu -> {runs, paths}`. The columns of the summary table are "HLT menu", "Runs" and "Matching HLT path(s)".
 
 
 Parameters:
