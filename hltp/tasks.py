@@ -102,7 +102,7 @@ class GetLumiData(TaskWithSummary, BrilSandbox):
             run = int(values[0].split(":")[0])
             data[run] = dict(
                 lumi=float(values[5]),
-                hlt_path=values[3],
+                path=values[3],
             )
 
         # save the output and print the summary
@@ -115,12 +115,12 @@ class GetLumiData(TaskWithSummary, BrilSandbox):
 
             data = self.output().load(formatter="json")
 
-            hlt_paths = sorted(list(set(d["hlt_path"] for d in data.values())))
+            paths = sorted(list(set(d["path"] for d in data.values())))
             lumi = sum(d["lumi"] for d in data.values())
             print("runs : {}".format(len(data)))
             print("lumi : {:.3f} /pb".format(lumi))
-            print("paths: {}".format(len(hlt_paths)))
-            print("\n".join(("  - " + p) for p in hlt_paths))
+            print("paths: {}".format(len(paths)))
+            print("\n".join(("  - " + p) for p in paths))
             print("")
 
 
@@ -364,6 +364,112 @@ class GetPathsFromMenu(TaskWithSummary, CMSSWSandbox):
             print("")
 
 
+class GetPathsFromRuns(TaskWithSummary):
+
+    run_numbers = law.CSVParameter(default=[], description="run numbers to query, can also be "
+        "ranges denoted by 'start-end' (both inclusive), default: runs from lumi file")
+    lumi_file = GetLumiData.lumi_file
+    hlt_paths = law.CSVParameter(default=[], description="when set, can be a hlt paths (patterns "
+        "allowed) that are used to filter the obtained paths, default: []")
+    table_format = luigi.Parameter(default="fancy_grid", significant=False, description="the tabulate "
+        "table format for the summary, default: grid")
+
+    def requires(self):
+        return GetMenusInData.req(self)
+
+    def output(self):
+        return self.local_target("paths.json")
+
+    @law.decorator.notify
+    def run(self):
+        # read menu data
+        menu_data = self.input().load(formatter="json")
+
+        # expand run numbers
+        if self.run_numbers:
+            run_numbers = set()
+            for r in self.run_numbers:
+                if r.count("-") == 1:
+                    start, end = [int(s) for s in r.split("-")]
+                    run_numbers |= set(range(start, end + 1))
+                else:
+                    run_numbers.add(int(r))
+            run_numbers = sorted(list(run_numbers))
+        else:
+            lumi_data = law.LocalFileTarget(self.lumi_file).load(formatter="json")
+            run_numbers = [int(r) for r in lumi_data.keys()]
+
+        # reduce menu data to a simple mapping menu -> valid runs
+        menu_runs = {
+            menu: [r for r in data["runs"] if r in run_numbers]
+            for menu, data in six.iteritems(menu_data)
+        }
+        menu_runs = {
+            menu: runs
+            for menu, runs in six.iteritems(menu_runs)
+            if runs
+        }
+        self.publish_message("found {} trigger menus".format(len(menu_runs)))
+
+        # get all paths for all menus
+        paths_inputs = yield {
+            menu: GetPathsFromMenu.req(self, hlt_menu=menu)
+            for menu in menu_runs
+        }
+        menu_paths = {
+            menu: sorted(inp.load(formatter="json"))
+            for menu, inp in six.iteritems(paths_inputs)
+        }
+
+        # filter by given hlt path patterns
+        if self.hlt_paths:
+            menu_paths = {
+                menu: [p for p in paths if law.util.multi_match(p, self.hlt_paths, mode=any)]
+                for menu, paths in six.iteritems(menu_paths)
+            }
+            menu_paths = {
+                menu: paths
+                for menu, paths in six.iteritems(menu_paths)
+                if paths
+            }
+
+        # merge output data
+        data = {
+            menu: dict(runs=menu_runs[menu], paths=paths)
+            for menu, paths in six.iteritems(menu_paths)
+        }
+
+        # save the output and print the summary
+        output = self.output()
+        output.parent.touch()
+        output.dump(data, indent=4, formatter="json")
+        self.summary()
+
+    def summary(self):
+        with self.summary_lock():
+            super(GetPathsFromRuns, self).summary()
+
+            data = self.output().load(formatter="json")
+
+            headers = ["HLT menu", "Runs", "Matching HLT path(s)"]
+            rows = []
+
+            for menu, entry in six.iteritems(data):
+                rows.append([
+                    menu,
+                    ",\n".join(
+                        ",".join(str(r) for r in chunk)
+                        for chunk in law.util.iter_chunks(sorted(entry["runs"]), 5)
+                    ),
+                    "\n".join(entry["paths"]),
+                ])
+
+            # sort rows by first run number
+            rows = sorted(rows, key=lambda row: int(row[1].split(",", 1)[0]))
+
+            print(tabulate.tabulate(rows, headers=headers, tablefmt=self.table_format))
+
+
 class GetFilterNamesFromMenu(TaskWithSummary, CMSSWSandbox):
 
     hlt_menu = luigi.Parameter(description="the hlt menu (no pattern!) to query")
@@ -520,8 +626,7 @@ class GatherMCFilters(TaskWithSummary):
     hlt_paths = GetLumiDataWrapper.hlt_paths
     verbose_datasets = luigi.BoolParameter(default=False, significant=False, description="when "
         "set, print full dataset names in the first summary table, default: False")
-    table_format = luigi.Parameter(default="grid", significant=False, description="the tabulate "
-        "table format for the summary, default: grid")
+    table_format = GetPathsFromRuns.table_format
 
     check_for_patterns = ["datasets"]
 

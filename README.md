@@ -15,6 +15,7 @@ Available tasks:
 - [`GetMenusInData`](#getmenusindata)
 - [`GetPathsFromDataset`](#getpathsfromdataset)
 - [`GetPathsFromMenu`](#getpathsfrommenu)
+- [`GetPathsFromRuns`](#getpathsfromruns)
 - [`GetFilterNamesFromMenu`](#getfilternamesfrommenu)
 - [`GetFilterNamesFromRun`](#getfilternamesfromrun)
 - [`GatherMCFilters`](#gathermcfilters)
@@ -61,7 +62,7 @@ Parameters:
 
 > `> law run hltp.GetLumiData [parameters]`
 
-Uses `brilcalc lumi` to get luminosity data for a trigger path (name or pattern), given luminosity and normtag files. The output is a dictionary `run -> {lumi, hlt_path}`.
+Uses `brilcalc lumi` to get luminosity data for a trigger path (name or pattern), given luminosity and normtag files. The output is a dictionary `run -> {lumi, path}`.
 
 Parameters:
 
@@ -86,7 +87,7 @@ Parameters:
 
 > `> law run hltp.GetMenusInData [parameters]`
 
-Uses `brilcalc trg` to obtain all trigger menus used for data-taking and maps them to the runs the menus they were used in. The ouptut is a dictionary `menu_name -> {menu_id, runs}`.
+Uses `brilcalc trg` to obtain all trigger menus used for data-taking and maps them to the runs the menus they were used in. The output is a dictionary `menu_name -> {menu_id, runs}`.
 
 Parameters:
 
@@ -114,6 +115,26 @@ Returns the triggers paths for a trigger menu `hltConfFromDB`. The output is a l
 Parameters:
 
 - `--hlt-menu`: The trigger menu to query. Patterns not supported.
+
+
+##### `GetPathsFromRuns`
+
+> `> law run hltp.GetPathsFromRuns [parameters]`
+
+Returns the trigger paths for trigger menus which were active in certain runs, optionally filtered by a list of trigger path patterns. The output is a dictionary `menu -> {runs, paths}`. The columns of the summary table are "HLT menu", "Runs" and "Matched HLT path(s)".
+
+
+Parameters:
+
+- `--run-numbers`: A list of run numbers to query. Can be inclusive ranges in the format `"start-end"`. When empty, the run numbers from the luminosity file defined by `--lumi-file` are used.
+- `--lumi-file`: A luminosity file. Defaults to the `hltp_config.lumi_file` config.
+- `--hlt-paths`: Optional trigger paths to filter the paths obtained by querying a trigger menu (associated to a run). Patterns allowed.
+- `--table-format`: The [tabulate](https://pypi.org/project/tabulate/) table format. Defaults to `"grid"`.
+
+Example output:
+
+![Run paths](https://www.dropbox.com/s/1qlndb8iksyindu/hltp_run_paths.png?raw=1)
+
 
 
 ##### `GetFilterNamesFromMenu`
@@ -144,7 +165,7 @@ Parameters:
 
 > `> law run hltp.GatherMCFilters [parameters]`
 
-Gathers information about the `EDFilter` names of several trigger paths used for MC production. The menus are obtained by querying the respective first files of some datasets. The ouptut is a list of dictionaries `{menu, datasets, paths}`, where `paths` itself is a list of dictionaries `{name, filters}`. The summary consists of two tables. The first table shows which `"HLT path(s)"` belong to which `"HLT menu"` as found in which `"Dataset(s)"`. The second table contains the actual filter names. The columns are `"HLT path(s)"`, `"HLT menu(s)"` and `"Filter names"`.
+Gathers information about the `EDFilter` names of several trigger paths used for MC production. The menus are obtained by querying the respective first files of some datasets. The output is a list of dictionaries `{menu, datasets, paths}`, where `paths` itself is a list of dictionaries `{name, filters}`. The summary consists of two tables. The first table shows which `"HLT path(s)"` belong to which `"HLT menu"` as found in which `"Dataset(s)"`. The second table contains the actual filter names. The columns are `"HLT path(s)"`, `"HLT menu(s)"` and `"Filter names"`.
 
 Parameters:
 
@@ -162,7 +183,7 @@ Example output:
 
 > `> law run hltp.GatherDataFilters [parameters]`
 
-Gathers information about the `EDFilter` names of several trigger paths in several trigger menus employed for data-taking. Valid run numbers are taken from a luminosity file. The ouptut is a list of dictionaries `{menu, runs, paths}`, where `paths` itself is a list of dictionaries `{name, filters}`. The summary table has the columns `"HLT path(s)"`, `"Runs"`, and `"Filter names"`, and optionally `"HLT menu(s)"`.
+Gathers information about the `EDFilter` names of several trigger paths in several trigger menus employed for data-taking. Valid run numbers are taken from a luminosity file. The output is a list of dictionaries `{menu, runs, paths}`, where `paths` itself is a list of dictionaries `{name, filters}`. The summary table has the columns `"HLT path(s)"`, `"Runs"`, and `"Filter names"`, and optionally `"HLT menu(s)"`.
 
 Parameters:
 
