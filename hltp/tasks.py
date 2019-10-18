@@ -371,14 +371,15 @@ class GetPathsFromRuns(TaskWithSummary):
     lumi_file = GetLumiData.lumi_file
     hlt_paths = law.CSVParameter(default=[], description="when set, can be a hlt paths (patterns "
         "allowed) that are used to filter the obtained paths, default: []")
-    table_format = luigi.Parameter(default="fancy_grid", significant=False, description="the tabulate "
+    table_format = luigi.Parameter(default="grid", significant=False, description="the tabulate "
         "table format for the summary, default: grid")
 
     def requires(self):
         return GetMenusInData.req(self)
 
     def output(self):
-        return self.local_target("paths.json")
+        postfix = law.util.create_hash([self.run_numbers, self.lumi_file, self.hlt_paths])
+        return self.local_target("paths_{}.json".format(postfix))
 
     @law.decorator.notify
     def run(self):
