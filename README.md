@@ -32,7 +32,7 @@ cd cms-hlt-parser
 voms-proxy-init -voms cms
 
 # always run the setup (which installs some software _once_)
-source setup
+source setup.sh
 ```
 
 
