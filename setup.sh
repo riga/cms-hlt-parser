@@ -50,6 +50,7 @@ action() {
     }
     [ -z "$ZSH_VERSION" ] && export -f hltp_pip_install
 
+
     #
     # setup software
     #
@@ -66,7 +67,7 @@ action() {
             hltp_pip_install tabulate
             hltp_pip_install requests
             hltp_pip_install luigi
-            LAW_INSTALL_CUSTOM_SCRIPT=1 hltp_pip_install --no-deps git+https://github.com/riga/law.git
+            LAW_INSTALL_EXECUTABLE="env" hltp_pip_install --no-deps git+https://github.com/riga/law.git
         fi
     }
     [ -z "$ZSH_VERSION" ] && export -f hltp_install_software

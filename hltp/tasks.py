@@ -59,7 +59,7 @@ class GetDatasetLFNs(TaskWithSummary, CMSSWSandbox):
 
 class GetDatasetLFNsWrapper(Task, law.WrapperTask):
 
-    datasets = law.CSVParameter(default=law.config.keys("hltp_mc_datasets"),
+    datasets = law.CSVParameter(default=law.config.options("hltp_mc_datasets"),
         description="datasets to query, default: config hltp_mc_datasets")
 
     def requires(self):
@@ -69,9 +69,9 @@ class GetDatasetLFNsWrapper(Task, law.WrapperTask):
 class GetLumiData(TaskWithSummary, BrilSandbox):
 
     hlt_path = luigi.Parameter(description="the hlt path (can be a pattern) to query")
-    lumi_file = luigi.Parameter(default=law.config.get("hltp_config", "lumi_file"),
+    lumi_file = luigi.Parameter(default=law.config.get_expanded("hltp_config", "lumi_file"),
         description="the lumi json file to use, default: config hltp_config.lumi_file")
-    normtag_file = luigi.Parameter(default=law.config.get("hltp_config", "normtag_file"),
+    normtag_file = luigi.Parameter(default=law.config.get_expanded("hltp_config", "normtag_file"),
         description="the normtag file to use, default: config hltp_config.normtag_file")
 
     def output(self):
@@ -128,7 +128,7 @@ class GetLumiDataWrapper(Task, law.WrapperTask):
 
     lumi_file = GetLumiData.lumi_file
     normtag_file = GetLumiData.normtag_file
-    hlt_paths = law.CSVParameter(default=law.config.keys("hltp_paths"),
+    hlt_paths = law.CSVParameter(default=law.config.options("hltp_paths"),
         description="hlt paths (can be patterns) to query, default: config hltp_paths")
 
     def requires(self):
@@ -193,7 +193,7 @@ class GetMenusFromDataset(TaskWithSummary, CMSSWSandbox):
 
 class GetMenusFromDatasetWrapper(Task, law.WrapperTask):
 
-    datasets = law.CSVParameter(default=law.config.keys("hltp_mc_datasets"),
+    datasets = law.CSVParameter(default=law.config.options("hltp_mc_datasets"),
         description="datasets (no patterns!) to query, default: config hltp_mc_datasets")
     file_indices = law.CSVParameter(default=[0], description="indices of dataset files to query, "
         "default: [0]")
@@ -277,7 +277,7 @@ class GetPathsFromDataset(TaskWithSummary, CMSSWSandbox):
         lfn = self.input().load(formatter="json")[self.file_index]
 
         # convert it to a pfn
-        pfn = law.lfn_to_pfn(lfn)
+        pfn = law.cms.lfn_to_pfn(lfn)
 
         # stream and open one event with fwlite
         handle_data = {
@@ -786,7 +786,7 @@ class GatherMCFilters(TaskWithSummary):
 
 class GatherDataFilters(TaskWithSummary):
 
-    hlt_menus = law.CSVParameter(default=law.config.keys("hltp_data_menus"),
+    hlt_menus = law.CSVParameter(default=law.config.options("hltp_data_menus"),
         description="hlt menus (can be patterns) to query")
     hlt_paths = GetLumiDataWrapper.hlt_paths
     lumi_file = GetLumiData.lumi_file

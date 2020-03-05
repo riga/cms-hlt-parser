@@ -115,7 +115,7 @@ class TaskWithSummary(Task):
             _summary_lock.release()
 
     def summary(self):
-        print("print summary of task {}\n".format(self.colored_repr()))
+        print("print summary of task {}\n".format(self.repr()))
 
         if not self.complete():
             law.util.abort(msg="task not yet complete")
