@@ -62,12 +62,12 @@ action() {
             echo "installing sofware in $HLTP_SOFTWARE"
             mkdir -p "$HLTP_SOFTWARE"
 
-            hltp_pip_install six
-            hltp_pip_install python-telegram-bot
-            hltp_pip_install tabulate
-            hltp_pip_install requests
-            hltp_pip_install luigi
-            LAW_INSTALL_EXECUTABLE="env" hltp_pip_install --no-deps git+https://github.com/riga/law.git
+            hltp_pip_install setuptools==44.1.1 || return "$?"
+            hltp_pip_install six || return "$?"
+            hltp_pip_install tabulate || return "$?"
+            hltp_pip_install requests || return "$?"
+            hltp_pip_install --no-deps luigi==2.8.2 || return "$?"
+            LAW_INSTALL_EXECUTABLE="env" hltp_pip_install --no-deps git+https://github.com/riga/law.git || return "$?"
         fi
     }
     [ -z "$ZSH_VERSION" ] && export -f hltp_install_software
