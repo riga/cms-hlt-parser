@@ -30,8 +30,6 @@ def expand_pset(struct):
     Expands all CMS-based objects into native Python objects in an arbitrarily structured object
     *struct*.
     """
-    from FWCore.ParameterSet.Types import PSet
-
     if isinstance(struct, list):
         return [expand_pset(elem) for elem in struct]
     elif isinstance(struct, tuple):
@@ -63,7 +61,7 @@ def fwlite_loop(path, handle_data=None, start=0, end=-1, object_type="Event"):
     ROOT.gSystem.Load("libDataFormatsFWLite.so")
     ROOT.FWLiteEnabler.enable()
 
-    from DataFormats.FWLite import Events, Runs, Handle
+    from DataFormats.FWLite import Events, Runs, Handle  # noqa
 
     paths = path if isinstance(path, (list, tuple)) else [path]
 

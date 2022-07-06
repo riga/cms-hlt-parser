@@ -4,7 +4,6 @@
 HLT parser base tasks.
 """
 
-
 __all__ = ["Task", "TaskWithSummary", "CMSSWSandbox", "BrilSandbox"]
 
 
@@ -13,7 +12,6 @@ import sys
 import re
 from subprocess import PIPE
 from multiprocessing import Lock
-from abc import abstractmethod
 from contextlib import contextmanager
 
 import luigi
@@ -50,8 +48,10 @@ class Task(law.Task):
         for attr in self.check_for_patterns:
             for value in law.util.make_list(getattr(self, attr)):
                 if is_pattern(value):
-                    raise ValueError("the attribute {}.{} appears to contain a pattern: {}".format(
-                        self.__class__.__name__, attr, value))
+                    raise ValueError(
+                        "the attribute {}.{} appears to contain a pattern: {}".format(
+                            self.__class__.__name__, attr, value),
+                    )
 
     def store_parts(self):
         return (self.task_family,)
@@ -77,8 +77,12 @@ class Task(law.Task):
             if publish_cmd:
                 self.publish_message("cmd: {}".format(law.util.colored(cmd, style="bright")))
 
-            code, out, _ = law.util.interruptable_popen(cmd, shell=True, executable="/bin/bash",
-                stdout=PIPE)
+            code, out, _ = law.util.interruptable_popen(
+                cmd,
+                shell=True,
+                executable="/bin/bash",
+                stdout=PIPE,
+            )
 
             if code != 0:
                 raise Exception("{} failed".format(prog or cmd.split(" ", 1)[0]))
@@ -92,8 +96,12 @@ class TaskWithSummary(Task):
     method instead of running anyhing. In law terms, this is an *interactive parameter*.
     """
 
-    print_summary = luigi.BoolParameter(default=False, significant=False, description="print the "
-        "task summary, do not run any task, requires the task to be complete, default: False")
+    print_summary = luigi.BoolParameter(
+        default=False,
+        significant=False,
+        description="print the task summary, do not run any task, requires the task to be "
+        "complete, default: False",
+    )
 
     interactive_params = law.Task.interactive_params + ["print_summary"]
     exclude_params_req = {"print_summary"}

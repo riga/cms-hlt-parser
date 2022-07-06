@@ -46,7 +46,7 @@ action() {
     [ -z "$ZSH_VERSION" ] && export -f hltp_add_bin
 
     hltp_pip_install() {
-        PYTHONUSERBASE="$HLTP_SOFTWARE" pip install -I --user --no-cache-dir "$@"
+        PYTHONUSERBASE="$HLTP_SOFTWARE" pip3 install -I --user --no-cache-dir "$@"
     }
     [ -z "$ZSH_VERSION" ] && export -f hltp_pip_install
 
@@ -66,8 +66,8 @@ action() {
             hltp_pip_install six || return "$?"
             hltp_pip_install tabulate || return "$?"
             hltp_pip_install requests || return "$?"
-            hltp_pip_install --no-deps luigi==2.8.2 || return "$?"
-            LAW_INSTALL_EXECUTABLE="env" hltp_pip_install --no-deps git+https://github.com/riga/law.git || return "$?"
+            hltp_pip_install luigi || return "$?"
+            LAW_INSTALL_EXECUTABLE="/usr/bin/env python3" hltp_pip_install --no-deps git+https://github.com/riga/law.git || return "$?"
         fi
     }
     [ -z "$ZSH_VERSION" ] && export -f hltp_install_software
@@ -76,7 +76,7 @@ action() {
     export PYTHONWARNINGS="ignore"
 
     # python software
-    local pyv="$( python -c "import sys;print('{0.major}.{0.minor}'.format(sys.version_info))" )"
+    local pyv="$( python3 -c "import sys;print('{0.major}.{0.minor}'.format(sys.version_info))" )"
     hltp_add_py "$HLTP_SOFTWARE/lib/python${pyv}/site-packages"
     hltp_add_bin "$HLTP_SOFTWARE/bin"
 

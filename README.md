@@ -2,7 +2,8 @@
 
 Read, parse and provide CMS High-Level Trigger and Luminosity information such as trigger menus, trigger paths, filter names, etc.
 
-The tasks defined in this project are based on the [luigi analysis workflow (law)](https://law.readthedocs.io/en/latest) package. For more information, see
+The tasks defined in this project are based on the [luigi analysis workflow (law)](https://law.readthedocs.io/en/latest) package.
+For more information, see
 
 - [law](https://law.readthedocs.io/en/latest)
 - [luigi](https://luigi.readthedocs.io/en/stable)
@@ -21,6 +22,8 @@ Available tasks:
 - [`GatherMCFilters`](#gathermcfilters)
 - [`GatherDataFilters`](#gatherdatafilters)
 
+The setup and code in this project use `pip3` and `python3`.
+
 
 ### Setup
 
@@ -38,20 +41,25 @@ source setup.sh
 
 ### Tasks
 
-To execute a task, run `law run hltp.<task_name> [parameters]`. Please find a list of all available tasks, parameters and examples below.
+To execute a task, run `law run hltp.<task_name> [parameters]`.
+Please find a list of all available tasks, parameters and examples below.
 
 Also, some task parameter have defaults that lookup values in the [law.cfg](./law.cfg) config file.
 
-The output file(s) of a task can be obtained by adding `--print-status 0` or `--print-output 0` to the respective `law run` command. They are mostly JSON files containing the described output information. Also, almost all tasks print a summary after they successfully run.
+The output file(s) of a task can be obtained by adding `--print-status 0` or `--print-output 0` to the respective `law run` command.
+They are mostly JSON files containing the described output information.
+Also, almost all tasks print a summary after they successfully run.
 
-In case a task is already completed (i.e., its output exists), it is not run again and no summary is printed. To print only the summary, add `--print-summary` to the `law run` command.
+In case a task is already completed (i.e., its output exists), it is not run again and no summary is printed.
+To print only the summary, add `--print-summary` to the `law run` command.
 
 
 ##### `GetDatasetLFNs`
 
 > `> law run hltp.GetDatasetLFNs [parameters]`
 
-Queries the DAS service to get the logical file names (LFNs) for a dataset (e.g. `/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/.../MINIAODSIM`). The output is the list of LFNs.
+Queries the DAS service to get the logical file names (LFNs) for a dataset (e.g. `/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/.../MINIAODSIM`).
+The output is the list of LFNs.
 
 Parameters:
 
@@ -64,7 +72,8 @@ Parameters:
 
 > `> law run hltp.GetLumiData [parameters]`
 
-Uses `brilcalc lumi` to get luminosity data for a trigger path (name or pattern), given luminosity and normtag files. The output is a dictionary `run -> {lumi, path}`.
+Uses `brilcalc lumi` to get luminosity data for a trigger path (name or pattern), given luminosity and normtag files.
+The output is a dictionary `run -> {lumi, path}`.
 
 Parameters:
 
@@ -79,7 +88,8 @@ Parameters:
 
 > `> law run hltp.GetMenusFromDataset [parameters]`
 
-Returns the menus found in the n-th file of a dataset using the `hltInfo` command. The output is a list of trigger menus.
+Returns the menus found in the n-th file of a dataset using the `hltInfo` command.
+The output is a list of trigger menus.
 
 Parameters:
 
@@ -93,7 +103,8 @@ Parameters:
 
 > `> law run hltp.GetMenusInData [parameters]`
 
-Uses `brilcalc trg` to obtain all trigger menus used for data-taking and maps them to the runs the menus they were used in. The output is a dictionary `menu_name -> {menu_id, runs}`.
+Uses `brilcalc trg` to obtain all trigger menus used for data-taking and maps them to the runs the menus they were used in.
+The output is a dictionary `menu_name -> {menu_id, runs}`.
 
 Parameters:
 
@@ -106,7 +117,9 @@ Parameters:
 
 > `> law run hltp.GetPathsFromDataset [parameters]`
 
-Returns the triggers paths found in the n-th file of a dataset. Internally, this is done by opening the file with `fwlite` and reading the trigger names using the trigger bits. The output is a list of trigger paths.
+Returns the triggers paths found in the n-th file of a dataset.
+Internally, this is done by opening the file with `fwlite` and reading the trigger names using the trigger bits.
+The output is a list of trigger paths.
 
 Parameters:
 
@@ -120,7 +133,8 @@ Parameters:
 
 > `> law run hltp.GetPathsFromMenu [parameters]`
 
-Returns the triggers paths for a trigger menu `hltConfFromDB`. The output is a list of trigger paths.
+Returns the triggers paths for a trigger menu `hltConfFromDB`.
+The output is a list of trigger paths.
 
 Parameters:
 
@@ -133,7 +147,8 @@ Parameters:
 
 > `> law run hltp.GetPathsFromRuns [parameters]`
 
-Returns the trigger paths for trigger menus which were active in certain runs, optionally filtered by a list of trigger path patterns. The output is a dictionary `menu -> {runs, paths}`. The columns of the summary table are "HLT menu", "Runs" and "Matching HLT path(s)".
+Returns the trigger paths for trigger menus which were active in certain runs, optionally filtered by a list of trigger path patterns.
+The output is a dictionary `menu -> {runs, paths}`. The columns of the summary table are "HLT menu", "Runs" and "Matching HLT path(s)".
 
 
 Parameters:
@@ -154,7 +169,9 @@ Example output:
 
 > `> law run hltp.GetFilterNamesFromMenu [parameters]`
 
-Gets the names of all `EDFilter` modules of a trigger path as defined in a trigger menu. Internally, `hltConfigFromDB` is used to obtain the configuration file of the path, the configuration is loaded, and the filter modules are identified programmatically. The output is a list of dictionaries `{name, parameters}`.
+Gets the names of all `EDFilter` modules of a trigger path as defined in a trigger menu.
+Internally, `hltConfigFromDB` is used to obtain the configuration file of the path, the configuration is loaded, and the filter modules are identified programmatically.
+The output is a list of dictionaries `{name, parameters}`.
 
 Parameters:
 
@@ -168,7 +185,9 @@ Parameters:
 
 > `> law run hltp.GetFilterNamesFromRun [parameters]`
 
-Gets the names of all `EDFilter` modules of a trigger path used in a specific run. Internally, `GetMenusInData` is used to make the connection between trigger menu and run number, and `GetFilterNamesFromMenu` is invoked internally as a [dynamic dependency](https://luigi.readthedocs.io/en/stable/tasks.html?highlight=dynamic#dynamic-dependencies). In fact, the output is identical to `GetFilterNamesFromMenu`, i.e., it is a list of dictionaries `{name, parameters}`.
+Gets the names of all `EDFilter` modules of a trigger path used in a specific run.
+Internally, `GetMenusInData` is used to make the connection between trigger menu and run number, and `GetFilterNamesFromMenu` is invoked internally as a [dynamic dependency](https://luigi.readthedocs.io/en/stable/tasks.html?highlight=dynamic#dynamic-dependencies).
+In fact, the output is identical to `GetFilterNamesFromMenu`, i.e., it is a list of dictionaries `{name, parameters}`.
 
 Parameters:
 
@@ -182,7 +201,13 @@ Parameters:
 
 > `> law run hltp.GatherMCFilters [parameters]`
 
-Gathers information about the `EDFilter` names of several trigger paths used for MC production. The menus are obtained by querying the respective first files of some datasets. The output is a list of dictionaries `{menu, datasets, paths}`, where `paths` itself is a list of dictionaries `{name, filters}`. The summary consists of two tables. The first table shows which `"HLT path(s)"` belong to which `"HLT menu"` as found in which `"Dataset(s)"`. The second table contains the actual filter names. The columns are `"HLT path(s)"`, `"HLT menu(s)"` and `"Filter names"`.
+Gathers information about the `EDFilter` names of several trigger paths used for MC production.
+The menus are obtained by querying the respective first files of some datasets.
+The output is a list of dictionaries `{menu, datasets, paths}`, where `paths` itself is a list of dictionaries `{name, filters}`.
+The summary consists of two tables.
+The first table shows which `"HLT path(s)"` belong to which `"HLT menu"` as found in which `"Dataset(s)"`.
+The second table contains the actual filter names.
+The columns are `"HLT path(s)"`, `"HLT menu(s)"` and `"Filter names"`.
 
 Parameters:
 
@@ -202,7 +227,10 @@ Example output:
 
 > `> law run hltp.GatherDataFilters [parameters]`
 
-Gathers information about the `EDFilter` names of several trigger paths in several trigger menus employed for data-taking. Valid run numbers are taken from a luminosity file. The output is a list of dictionaries `{menu, runs, paths}`, where `paths` itself is a list of dictionaries `{name, filters}`. The summary table has the columns `"HLT path(s)"`, `"Runs"`, and `"Filter names"`, and optionally `"HLT menu(s)"`.
+Gathers information about the `EDFilter` names of several trigger paths in several trigger menus employed for data-taking.
+Valid run numbers are taken from a luminosity file.
+The output is a list of dictionaries `{menu, runs, paths}`, where `paths` itself is a list of dictionaries `{name, filters}`.
+The summary table has the columns `"HLT path(s)"`, `"Runs"`, and `"Filter names"`, and optionally `"HLT menu(s)"`.
 
 Parameters:
 

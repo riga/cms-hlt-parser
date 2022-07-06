@@ -15,7 +15,6 @@ action() {
         cd "$CMSSW_VERSION/src"
         eval "$( scramv1 runtime -sh )" || return "$?"
         git cms-addpkg HLTrigger/Configuration
-        git cms-merge-topic fwyzard:CMSSW_10_2_X_ConfDB_update_ADG_hostnames
         scram b || return "$?"
     else
         cd "$HLTP_CMSSW/$SCRAM_ARCH/$CMSSW_VERSION/src" || return "$?"
