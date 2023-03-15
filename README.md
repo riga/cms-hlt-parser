@@ -39,6 +39,68 @@ source setup.sh
 ```
 
 
+### First example commands
+
+Before diving into the various tasks listed [below](#tasks), you might want to start with some simple commands to get a feeling of what they do and how the results look like.
+
+
+#### 1. Lumi information of HLT paths
+
+```bash
+# command
+> law run hltp.GetLumiData \
+    --hlt-path 'HLT_IsoMu2?_v*' \
+    --print-summary
+
+# output
+runs : 478
+lumi : 59735.969 /pb
+paths: 3
+  - HLT_IsoMu27_v14
+  - HLT_IsoMu27_v15
+  - HLT_IsoMu27_v16
+```
+
+
+#### 2. Get HLT menus found in a dataset
+
+```bash
+# command
+> law run hltp.GetMenusFromDataset \
+    --dataset /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM \
+    --print-summary
+
+# output
+menus: 1
+  - /frozen/2018/2e34/v3.2/HLT/V1
+```
+
+
+#### 3. Get HLT paths active in certain runs
+
+```bash
+# command
+> law run hltp.GetPathsFromRuns \
+    --run-numbers 315640,315641 \
+    --print-summary
+
+# output
++------------------------------------------+---------------+----------------------------------------------------------------------------------+
+| HLT menu                                 | Runs          | Matching HLT path(s)                                                             |
++==========================================+===============+==================================================================================+
+| /cdaq/physics/Run2018/2e34/v1.2.2/HLT/V4 | 315640,315641 | HLT_AK4CaloJet100_v10                                                            |
+|                                          |               | HLT_AK4CaloJet120_v9                                                             |
+|                                          |               | HLT_AK4CaloJet30_v11                                                             |
+|                                          |               | HLT_AK4CaloJet40_v10                                                             |
+|                                          |               | HLT_AK4CaloJet50_v10                                                             |
+|                                          |               | HLT_AK4CaloJet80_v10                                                             |
+|                                          |               | HLT_AK4PFJet100_v17                                                              |
+|                                          |               | HLT_AK4PFJet120_v16                                                              |
+# ... and many more
+# consider adding "--hlt-paths <csv_separated_patterns>" to filter them
+```
+
+
 ### Tasks
 
 To execute a task, run `law run hltp.<task_name> [parameters]`.
@@ -65,6 +127,10 @@ Parameters:
 
 - `--dataset`: A dataset as shown in DAS. Patterns not supported.
 
+Dependencies:
+
+*none*
+
 <hr />
 
 
@@ -81,6 +147,10 @@ Parameters:
 - `--lumi-file`: A luminosity file. Defaults to the `hltp_config.lumi_file` config.
 - `--normtag-file`: A normtag file. Defaults to the `hltp_config.normtag_file` config.
 
+Dependencies:
+
+*none*
+
 <hr />
 
 
@@ -96,6 +166,13 @@ Parameters:
 - `--dataset`: A dataset as shown in DAS. Patterns not supported.
 - `--file-index`: The number of the file to query. Defaults to 0.
 
+Dependencies:
+
+```mermaid
+flowchart LR
+    GetMenusFromDataset --> GetDatasetLFNs
+```
+
 <hr />
 
 
@@ -109,6 +186,10 @@ The output is a dictionary `menu_name -> {menu_id, runs}`.
 Parameters:
 
 - `--show-runs`: When used, all run numbers are printed in the summary table instead of only their count. Defaults to false.
+
+Dependencies:
+
+*none*
 
 <hr />
 
@@ -126,6 +207,13 @@ Parameters:
 - `--dataset`: A dataset as shown in DAS. Patterns not supported.
 - `--file-index`: The number of the file to query. Defaults to 0.
 
+Dependencies:
+
+```mermaid
+flowchart LR
+    GetPathsFromDataset --> GetDatasetLFNs
+```
+
 <hr />
 
 
@@ -139,6 +227,10 @@ The output is a list of trigger paths.
 Parameters:
 
 - `--hlt-menu`: The trigger menu to query. Patterns not supported.
+
+Dependencies:
+
+*none*
 
 <hr />
 
@@ -162,6 +254,14 @@ Example output:
 
 ![Run paths](https://www.dropbox.com/s/1qlndb8iksyindu/hltp_run_paths.png?raw=1)
 
+Dependencies:
+
+```mermaid
+flowchart LR
+    GetPathsFromRuns --> GetMenusInData
+    GetPathsFromRuns -- multiple --> GetPathsFromMenu
+```
+
 <hr />
 
 
@@ -178,6 +278,10 @@ Parameters:
 - `--hlt-path`: The trigger path to query. Patterns not supported.
 - `--hlt-menu`: The trigger menu to query. Patterns not supported.
 
+Dependencies:
+
+*none*
+
 <hr />
 
 
@@ -193,6 +297,14 @@ Parameters:
 
 - `--hlt-path`: The trigger path to query. Patterns not supported.
 - `--run-number`: The run number to query.
+
+Dependencies:
+
+```mermaid
+flowchart LR
+    GetFilterNamesFromRun --> GetMenusInData
+    GetFilterNamesFromRun --> GetFilterNamesFromMenu
+```
 
 <hr />
 
@@ -220,6 +332,16 @@ Example output:
 
 ![MC filters](https://www.dropbox.com/s/jv4y5sdhfvy6ars/hltp_mc_filters.png.png?raw=1)
 
+Dependencies:
+
+```mermaid
+flowchart LR
+    GatherMCFilters -- multiple --> GetMenusFromDataset
+    GetMenusFromDataset --> GetDatasetLFNs
+    GatherMCFilters -- multiple --> GetPathsFromMenu
+    GatherMCFilters -- multiple --> GetFilterNamesFromMenu
+```
+
 <hr />
 
 
@@ -244,3 +366,12 @@ Parameters:
 Example output:
 
 ![Data filters](https://www.dropbox.com/s/m71xbel9pkzux2k/hltp_data_filters.png?raw=1)
+
+Dependencies:
+
+```mermaid
+flowchart LR
+    GatherDataFilters --> GetMenusInData
+    GatherDataFilters -- multiple --> GetPathsFromMenu
+    GatherDataFilters -- multiple --> GetFilterNamesFromMenu
+```

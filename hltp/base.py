@@ -75,7 +75,7 @@ class Task(law.Task):
         cmd = re.sub(r"\s+", " ", cmd).strip()
         with self.publish_step(msg, runtime=True):
             if publish_cmd:
-                self.publish_message("cmd: {}".format(law.util.colored(cmd, style="bright")))
+                self.publish_message("cmd: " + law.util.colored(cmd, style="bright"))
 
             code, out, _ = law.util.interruptable_popen(
                 cmd,
@@ -134,7 +134,7 @@ class CMSSWSandbox(law.SandboxTask):
     Sandbox that embedds the run calls of inheriting tasks inside a CMSSW environment.
     """
 
-    sandbox = "bash::$HLTP_BASE/hltp/files/env_cmssw.sh"
+    sandbox = "bash::$HLTP_BASE/sandboxes/env_cmssw.sh"
 
 
 class BrilSandbox(law.SandboxTask):
@@ -142,4 +142,4 @@ class BrilSandbox(law.SandboxTask):
     Sandbox that embedds the run calls of inheriting tasks inside a bril environment.
     """
 
-    sandbox = "bash::$HLTP_BASE/hltp/files/env_bril.sh"
+    sandbox = "bash::$HLTP_BASE/sandboxes/env_bril.sh"

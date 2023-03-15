@@ -710,8 +710,11 @@ class GatherMCFilters(TaskWithSummary):
         for dataset, inp in zip(self.datasets, menu_inputs):
             _menus = inp.load(formatter="json")
             if len(_menus) != 1:
-                raise Exception("MC datasets are expected to contain one HLT menu, got {}".format(
-                    ",".join(_menus)))
+                raise Exception(
+                    "MC datasets are expected to contain one HLT menu, got {}".format(
+                        ",".join(_menus),
+                    ),
+                )
             menu_datasets.setdefault(str(_menus[0]), []).append(dataset)
         menus = sorted(list(menu_datasets.keys()), key=str.lower)
 
@@ -730,9 +733,14 @@ class GatherMCFilters(TaskWithSummary):
             menu: [str(p) for p in paths if law.util.multi_match(p, self.hlt_paths, mode=any)]
             for menu, paths in six.iteritems(all_paths)
         }
-        self.publish_message(fmt("selected {} from {} available path(s) in {} menu(s):",
-            len(law.util.flatten(menu_paths.values())),
-            len(law.util.flatten(all_paths.values())), len(menus)))
+        self.publish_message(
+            fmt(
+                "selected {} from {} available path(s) in {} menu(s):",
+                len(law.util.flatten(menu_paths.values())),
+                len(law.util.flatten(all_paths.values())),
+                len(menus),
+            ),
+        )
         for menu, paths in six.iteritems(menu_paths):
             self.publish_message(fmt("{}:\n    {}", menu, "\n    ".join(paths)))
 

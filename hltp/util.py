@@ -32,16 +32,16 @@ def expand_pset(struct):
     """
     if isinstance(struct, list):
         return [expand_pset(elem) for elem in struct]
-    elif isinstance(struct, tuple):
+    if isinstance(struct, tuple):
         return tuple(expand_pset(elem) for elem in struct)
-    elif isinstance(struct, set):
+    if isinstance(struct, set):
         return {expand_pset(elem) for elem in struct}
-    elif isinstance(struct, dict):
+    if isinstance(struct, dict):
         return {key: expand_pset(value) for key, value in six.iteritems(struct)}
-    elif struct.__class__.__module__.startswith("FWCore.ParameterSet."):
+    if struct.__class__.__module__.startswith("FWCore.ParameterSet."):
         if callable(getattr(struct, "parameters_", None)):
             return expand_pset(struct.parameters_())
-        elif callable(getattr(struct, "value", None)):
+        if callable(getattr(struct, "value", None)):
             return expand_pset(struct.value())
     return struct
 
