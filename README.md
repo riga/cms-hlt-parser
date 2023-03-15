@@ -85,17 +85,17 @@ menus: 1
     --print-summary
 
 # output
-+------------------------------------------+---------------+----------------------------------------------------------------------------------+
-| HLT menu                                 | Runs          | Matching HLT path(s)                                                             |
-+==========================================+===============+==================================================================================+
-| /cdaq/physics/Run2018/2e34/v1.2.2/HLT/V4 | 315640,315641 | HLT_AK4CaloJet100_v10                                                            |
-|                                          |               | HLT_AK4CaloJet120_v9                                                             |
-|                                          |               | HLT_AK4CaloJet30_v11                                                             |
-|                                          |               | HLT_AK4CaloJet40_v10                                                             |
-|                                          |               | HLT_AK4CaloJet50_v10                                                             |
-|                                          |               | HLT_AK4CaloJet80_v10                                                             |
-|                                          |               | HLT_AK4PFJet100_v17                                                              |
-|                                          |               | HLT_AK4PFJet120_v16                                                              |
++------------------------------------------+---------------+-----------------------+
+| HLT menu                                 | Runs          | Matching HLT path(s)  |
++==========================================+===============+=======================+
+| /cdaq/physics/Run2018/2e34/v1.2.2/HLT/V4 | 315640,315641 | HLT_AK4CaloJet100_v10 |
+|                                          |               | HLT_AK4CaloJet120_v9  |
+|                                          |               | HLT_AK4CaloJet30_v11  |
+|                                          |               | HLT_AK4CaloJet40_v10  |
+|                                          |               | HLT_AK4CaloJet50_v10  |
+|                                          |               | HLT_AK4CaloJet80_v10  |
+|                                          |               | HLT_AK4PFJet100_v17   |
+|                                          |               | HLT_AK4PFJet120_v16   |
 # ... and many more
 # consider adding "--hlt-paths <csv_separated_patterns>" to filter them
 ```
@@ -114,6 +114,8 @@ Also, almost all tasks print a summary after they successfully run.
 
 In case a task is already completed (i.e., its output exists), it is not run again and no summary is printed.
 To print only the summary, add `--print-summary` to the `law run` command.
+
+<hr />
 
 
 ##### `GetDatasetLFNs`
