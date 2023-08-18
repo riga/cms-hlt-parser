@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
 action() {
-    local bril_version="$( law config hltp_config.bril_version )"
-    export PATH="${PATH}:/afs/cern.ch/cms/lumi/brilconda-${bril_version}/bin"
+    # activate the python 3 conda env
+    source "/cvmfs/cms-bril.cern.ch/brilconda3/bin/activate" ""
 
-    source activate root
+    # adjust local software paths
+    local bril_dir="${HLTP_SOFTWARE}/bril"
+    local pyv="$( python -c "import sys; print('{0.major}.{0.minor}'.format(sys.version_info))" )"
+    export PYTHONPATH="${bril_dir}/lib/python${pyv}/site-packages:${PYTHONPATH}"
+    export PATH="${bril_dir}/bin:${PATH}"
 
-    hltp_pip_install() {
-        PYTHONUSERBASE="${HLTP_SOFTWARE}" pip install -I --user --no-cache-dir "$@"
-    }
-
-    if [ -z "$( type brilcalc 2> /dev/null )" ]; then
-        hltp_pip_install -U brilws
+    if ! type brilcalc &> /dev/null; then
+        PYTHONUSERBASE="${bril_dir}" pip install --user brilws
     fi
 }
 action "$@"

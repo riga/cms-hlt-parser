@@ -12,7 +12,6 @@ import itertools
 import six
 import luigi
 import law
-import tabulate
 
 from hltp.base import Task, TaskWithSummary, CMSSWSandbox, BrilSandbox
 from hltp.util import expand_pset, fwlite_loop, text_to_process
@@ -480,6 +479,8 @@ class GetPathsFromRuns(TaskWithSummary):
         self.summary()
 
     def summary(self):
+        import tabulate
+
         with self.summary_lock():
             super(GetPathsFromRuns, self).summary()
 
@@ -780,6 +781,8 @@ class GatherMCFilters(TaskWithSummary):
         self.summary()
 
     def summary(self):
+        import tabulate
+
         with self.summary_lock():
             super(GatherMCFilters, self).summary()
 
@@ -958,6 +961,8 @@ class GatherDataFilters(TaskWithSummary):
         self.summary()
 
     def summary(self):
+        import tabulate
+
         with self.summary_lock():
             super(GatherDataFilters, self).summary()
 

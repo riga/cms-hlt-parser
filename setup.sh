@@ -22,33 +22,15 @@ action() {
     # global variables
     #
 
-    # base directory
     export HLTP_BASE="${this_dir}"
-
-    # other defaults
     [ -z "${HLTP_STORE}" ] && export HLTP_STORE="${HLTP_BASE}/store"
     [ -z "${HLTP_SOFTWARE}" ] && export HLTP_SOFTWARE="${HLTP_BASE}/software"
     [ -z "${HLTP_CMSSW}" ] && export HLTP_CMSSW="${HLTP_BASE}/cmssw"
 
+    export PYTHONPATH="${HLTP_BASE}:${PYTHONPATH}"
 
-    #
-    # helper functions
-    #
-
-    hltp_add_py() {
-        [ ! -z "$1" ] && export PYTHONPATH="$1:${PYTHONPATH}"
-    }
-    [ -z "${ZSH_VERSION}" ] && export -f hltp_add_py
-
-    hltp_add_bin() {
-        [ ! -z "$1" ] && export PATH="$1:${PATH}"
-    }
-    [ -z "${ZSH_VERSION}" ] && export -f hltp_add_bin
-
-    hltp_pip_install() {
-        PYTHONUSERBASE="${HLTP_SOFTWARE}" pip3 install -I --user --no-cache-dir "$@"
-    }
-    [ -z "${ZSH_VERSION}" ] && export -f hltp_pip_install
+    export PYTHONWARNINGS="${PYTHONWARNINGS:-ignore}"
+    export VIRTUAL_ENV_DISABLE_PROMPT="${VIRTUAL_ENV_DISABLE_PROMPT:-1}"
 
 
     #
@@ -58,33 +40,25 @@ action() {
     hltp_install_software() {
         [ "$1" = "force" ] && rm -rf "${HLTP_SOFTWARE}"
 
-        if [ ! -d "${HLTP_SOFTWARE}" ]; then
+        local missing="$( [ ! -d "${HLTP_SOFTWARE}" ] && echo "true" || echo "false" )"
+
+        if ${missing}; then
             echo "installing sofware in ${HLTP_SOFTWARE}"
             mkdir -p "${HLTP_SOFTWARE}"
+            python3 -m venv "${HLTP_SOFTWARE}"
+        fi
 
-            hltp_pip_install pip || return "$?"
-            hltp_pip_install six || return "$?"
-            hltp_pip_install tabulate || return "$?"
-            hltp_pip_install requests || return "$?"
-            hltp_pip_install luigi || return "$?"
-            LAW_INSTALL_EXECUTABLE="/usr/bin/env python3" hltp_pip_install --no-deps git+https://github.com/riga/law.git || return "$?"
+        source "${HLTP_SOFTWARE}/bin/activate" ""
+
+        if ${missing}; then
+            pip install -U pip || return "$?"
+            pip install tabulate requests git+https://github.com/riga/law.git || return "$?"
         fi
     }
     [ -z "${ZSH_VERSION}" ] && export -f hltp_install_software
 
-    # variables for external software
-    export PYTHONWARNINGS="ignore"
-
-    # python software
-    local pyv="$( python3 -c "import sys;print('{0.major}.{0.minor}'.format(sys.version_info))" )"
-    hltp_add_py "${HLTP_SOFTWARE}/lib/python${pyv}/site-packages"
-    hltp_add_bin "${HLTP_SOFTWARE}/bin"
-
     # install the software stack
     hltp_install_software
-
-    # add _this_ repo to the python path
-    hltp_add_py "${HLTP_BASE}"
 
 
     #
