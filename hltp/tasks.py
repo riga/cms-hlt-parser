@@ -32,7 +32,7 @@ class GetDatasetLFNs(TaskWithSummary, CMSSWSandbox):
         return self.local_target("{}.json".format(self.dataset.replace("/", "_")))
 
     @law.decorator.notify
-    @law.wlcg.ensure_voms_proxy
+    @law.wlcg.ensure_vomsproxy
     @law.decorator.localize
     def run(self):
         # run dasgoclient
@@ -162,7 +162,7 @@ class GetMenusFromDataset(TaskWithSummary, CMSSWSandbox):
         return self.local_target(path)
 
     @law.decorator.notify
-    @law.wlcg.ensure_voms_proxy
+    @law.wlcg.ensure_vomsproxy
     @law.decorator.localize
     def run(self):
         # get the dataset lfn
@@ -289,7 +289,7 @@ class GetPathsFromDataset(TaskWithSummary, CMSSWSandbox):
         return self.local_target(path)
 
     @law.decorator.notify
-    @law.wlcg.ensure_voms_proxy
+    @law.wlcg.ensure_vomsproxy
     @law.decorator.localize
     def run(self):
         # get the dataset lfn
